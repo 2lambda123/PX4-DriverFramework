@@ -31,210 +31,207 @@
  *
  ****************************************************************************/
 
-#include <string.h>
-#include "DriverFramework.hpp"
 #include "HMC5883.hpp"
+#include "DriverFramework.hpp"
+#include <string.h>
 #ifdef __DF_QURT
 #include "dev_fs_lib_i2c.h"
 #endif
 
-
-#define HMC5883_BUS_FREQUENCY_IN_KHZ	(400)
+#define HMC5883_BUS_FREQUENCY_IN_KHZ (400)
 // Found through trial and error, a timeout of 100 us seems to fail.
 #define HMC5883_TRANSFER_TIMEOUT_IN_USECS (500)
 
-#define HMC5883_REG_ID_A		(0x0a)
-#define HMC5883_REG_ID_B		(0x0b)
-#define HMC5883_REG_ID_C		(0x0c)
-#define HMC5883_REG_CONFIG_A		(0x00)
-#define HMC5883_REG_CONFIG_B		(0x01)
-#define HMC5883_REG_MODE		(0x02)
-#define HMC5883_REG_DATA_OUT_X_MSB	(0x03)
+#define HMC5883_REG_ID_A (0x0a)
+#define HMC5883_REG_ID_B (0x0b)
+#define HMC5883_REG_ID_C (0x0c)
+#define HMC5883_REG_CONFIG_A (0x00)
+#define HMC5883_REG_CONFIG_B (0x01)
+#define HMC5883_REG_MODE (0x02)
+#define HMC5883_REG_DATA_OUT_X_MSB (0x03)
 
-#define HMC5883_ID_A		('H')
-#define HMC5883_ID_B		('4')
-#define HMC5883_ID_C		('3')
+#define HMC5883_ID_A ('H')
+#define HMC5883_ID_B ('4')
+#define HMC5883_ID_C ('3')
 
 #define HMC5883_BITS_CONFIG_A_CONTINUOUS_75HZ (0x6 << 2)
 
-#define HMC5883_BITS_CONFIG_B_RANGE_1GA3    (0x01 << 5)
+#define HMC5883_BITS_CONFIG_B_RANGE_1GA3 (0x01 << 5)
 
-#define HMC5883_BITS_MODE_CONTINUOUS_MODE  (0x00)
-#define HMC5883_BITS_MODE_SINGLE_MODE	    (0x01)
+#define HMC5883_BITS_MODE_CONTINUOUS_MODE (0x00)
+#define HMC5883_BITS_MODE_SINGLE_MODE (0x01)
 
 using namespace DriverFramework;
 
+int HMC5883::hmc5883_init() {
 
-int HMC5883::hmc5883_init()
-{
+  /* Zero the struct */
+  m_sensor_data.last_read_time_usec = 0;
+  m_sensor_data.read_counter = 0;
+  m_sensor_data.error_counter = 0;
 
-    /* Zero the struct */
-    m_sensor_data.last_read_time_usec = 0;
-    m_sensor_data.read_counter = 0;
-    m_sensor_data.error_counter = 0;
+  int result;
+  uint8_t sensor_id;
 
-    int result;
-    uint8_t sensor_id;
+  /* Read the IDs of the HMC5883 sensor to confirm it's presence. */
+  result = _readReg(HMC5883_REG_ID_A, &sensor_id, sizeof(sensor_id));
 
-    /* Read the IDs of the HMC5883 sensor to confirm it's presence. */
-    result = _readReg(HMC5883_REG_ID_A, &sensor_id, sizeof(sensor_id));
+  if (result != 0) {
+    DF_LOG_ERR("error: unable to communicate with the hmc5883 mag sensor");
+    return -EIO;
+  }
 
-    if (result != 0) {
-        DF_LOG_ERR("error: unable to communicate with the hmc5883 mag sensor");
-        return -EIO;
-    }
+  if (sensor_id != HMC5883_ID_A) {
+    DF_LOG_ERR("HMC5883 sensor ID_A returned 0x%x instead of 0x%x", sensor_id,
+               HMC5883_ID_A);
+    return -1;
+  }
 
-    if (sensor_id != HMC5883_ID_A) {
-        DF_LOG_ERR("HMC5883 sensor ID_A returned 0x%x instead of 0x%x", sensor_id, HMC5883_ID_A);
-        return -1;
-    }
+  result = _readReg(HMC5883_REG_ID_B, &sensor_id, sizeof(sensor_id));
 
-    result = _readReg(HMC5883_REG_ID_B, &sensor_id, sizeof(sensor_id));
+  if (result != 0) {
+    DF_LOG_ERR("error: unable to communicate with the hmc5883 mag sensor");
+    return -EIO;
+  }
 
-    if (result != 0) {
-        DF_LOG_ERR("error: unable to communicate with the hmc5883 mag sensor");
-        return -EIO;
-    }
+  if (sensor_id != HMC5883_ID_B) {
+    DF_LOG_ERR("HMC5883 sensor ID_B returned 0x%x instead of 0x%x", sensor_id,
+               HMC5883_ID_B);
+    return -1;
+  }
 
-    if (sensor_id != HMC5883_ID_B) {
-        DF_LOG_ERR("HMC5883 sensor ID_B returned 0x%x instead of 0x%x", sensor_id, HMC5883_ID_B);
-        return -1;
-    }
+  result = _readReg(HMC5883_REG_ID_C, &sensor_id, sizeof(sensor_id));
 
-    result = _readReg(HMC5883_REG_ID_C, &sensor_id, sizeof(sensor_id));
+  if (result != 0) {
+    DF_LOG_ERR("error: unable to communicate with the hmc5883 mag sensor");
+    return -EIO;
+  }
 
-    if (result != 0) {
-        DF_LOG_ERR("error: unable to communicate with the hmc5883 mag sensor");
-        return -EIO;
-    }
+  if (sensor_id != HMC5883_ID_C) {
+    DF_LOG_ERR("HMC5883 sensor ID_C returned 0x%x instead of 0x%x", sensor_id,
+               HMC5883_ID_C);
+    return -1;
+  }
 
-    if (sensor_id != HMC5883_ID_C) {
-        DF_LOG_ERR("HMC5883 sensor ID_C returned 0x%x instead of 0x%x", sensor_id, HMC5883_ID_C);
-        return -1;
-    }
+  uint8_t config_b = HMC5883_BITS_CONFIG_B_RANGE_1GA3;
+  result = _writeReg(HMC5883_REG_CONFIG_B, &config_b, sizeof(config_b));
 
-    uint8_t config_b = HMC5883_BITS_CONFIG_B_RANGE_1GA3;
-    result = _writeReg(HMC5883_REG_CONFIG_B, &config_b, sizeof(config_b));
-
-    if (result != 0) {
-        DF_LOG_ERR("error: sensor configuration B failed");
-        return -EIO;
-    }
+  if (result != 0) {
+    DF_LOG_ERR("error: sensor configuration B failed");
+    return -EIO;
+  }
 
 #if defined(__DF_OCPOC)
-    // Set continuous measurement mode
-    uint8_t mode = HMC5883_BITS_CONFIG_A_CONTINUOUS_75HZ;
-    result = _writeReg(HMC5883_REG_MODE, &mode, sizeof(mode));
+  // Set continuous measurement mode
+  uint8_t mode = HMC5883_BITS_CONFIG_A_CONTINUOUS_75HZ;
+  result = _writeReg(HMC5883_REG_MODE, &mode, sizeof(mode));
 
-    if (result != 0) {
-        DF_LOG_ERR("error: setting sensor mode failed");
-    }
+  if (result != 0) {
+    DF_LOG_ERR("error: setting sensor mode failed");
+  }
 
 #endif
 
-    usleep(1000);
-    return 0;
+  usleep(1000);
+  return 0;
 }
 
-int HMC5883::start()
-{
-    int result = I2CDevObj::start();
+int HMC5883::start() {
+  int result = I2CDevObj::start();
 
-    if (result != 0) {
-        DF_LOG_ERR("error: could not start I2CDevObj");
-        goto exit;
-    }
+  if (result != 0) {
+    DF_LOG_ERR("error: could not start I2CDevObj");
+    goto exit;
+  }
 
-    /* Configure the I2C bus parameters for the mag sensor. */
-    result = _setSlaveConfig(HMC5883_SLAVE_ADDRESS,
-                             HMC5883_BUS_FREQUENCY_IN_KHZ,
-                             HMC5883_TRANSFER_TIMEOUT_IN_USECS);
+  /* Configure the I2C bus parameters for the mag sensor. */
+  result = _setSlaveConfig(HMC5883_SLAVE_ADDRESS, HMC5883_BUS_FREQUENCY_IN_KHZ,
+                           HMC5883_TRANSFER_TIMEOUT_IN_USECS);
 
-    if (result != 0) {
-        DF_LOG_ERR("I2C slave configuration failed");
-        goto exit;
-    }
+  if (result != 0) {
+    DF_LOG_ERR("I2C slave configuration failed");
+    goto exit;
+  }
 
-    /* Initialize the mag sensor. */
-    result = hmc5883_init();
+  /* Initialize the mag sensor. */
+  result = hmc5883_init();
 
-    if (result != 0) {
-        DF_LOG_ERR("error: mag sensor initialization failed, sensor read thread not started");
-        goto exit;
-    }
+  if (result != 0) {
+    DF_LOG_ERR("error: mag sensor initialization failed, sensor read thread "
+               "not started");
+    goto exit;
+  }
 
+  result = DevObj::start();
 
-    result = DevObj::start();
-
-    if (result != 0) {
-        DF_LOG_ERR("error: could not start DevObj");
-        goto exit;
-    }
+  if (result != 0) {
+    DF_LOG_ERR("error: could not start DevObj");
+    goto exit;
+  }
 
 exit:
+  return result;
+}
+
+int HMC5883::stop() {
+  int result = DevObj::stop();
+
+  if (result != 0) {
+    DF_LOG_ERR("DevObj stop failed");
     return result;
+  }
+
+  usleep(100000);
+
+  return 0;
 }
 
-int HMC5883::stop()
-{
-    int result = DevObj::stop();
+void HMC5883::_measure() {
+  int result = 0;
 
-    if (result != 0) {
-        DF_LOG_ERR("DevObj stop failed");
-        return result;
-    }
-
-    usleep(100000);
-
-    return 0;
-}
-
-void HMC5883::_measure()
-{
-    int result = 0;
-
-    if (_measurement_requested) {
+  if (_measurement_requested) {
 
 #pragma pack(push, 1)
-        struct { /* status register and data as read back from the device */
-            int16_t		x;
-            int16_t		z;
-            int16_t		y;
-        }	hmc_report {};
+    struct { /* status register and data as read back from the device */
+      int16_t x;
+      int16_t z;
+      int16_t y;
+    } hmc_report{};
 #pragma pack(pop)
 
-        result = _readReg(HMC5883_REG_DATA_OUT_X_MSB, (uint8_t *)&hmc_report, sizeof(hmc_report));
-
-        if (result != 0) {
-            m_sensor_data.error_counter++;
-
-        } else {
-
-            // TODO: add define if byteswap is needed
-            hmc_report.x = swap16(hmc_report.x);
-            hmc_report.y = swap16(hmc_report.y);
-            hmc_report.z = swap16(hmc_report.z);
-
-            m_sensor_data.field_x_ga = hmc_report.x * (1.0f / 1090.0f);
-            m_sensor_data.field_y_ga = hmc_report.y * (1.0f / 1090.0f);
-            m_sensor_data.field_z_ga = hmc_report.z * (1.0f / 1090.0f);
-            m_sensor_data.last_read_time_usec = DriverFramework::offsetTime();
-            m_sensor_data.read_counter++;
-
-            _publish(m_sensor_data);
-        }
-    }
-
-#if !defined(__DF_OCPOC)
-    /* Request next measurement. */
-    uint8_t mode = HMC5883_BITS_MODE_SINGLE_MODE;
-    result = _writeReg(HMC5883_REG_MODE, &mode, sizeof(mode));
+    result = _readReg(HMC5883_REG_DATA_OUT_X_MSB, (uint8_t *)&hmc_report,
+                      sizeof(hmc_report));
 
     if (result != 0) {
-        // TODO: count it as an error and keep going
-        DF_LOG_ERR("error: setting sensor mode failed");
+      m_sensor_data.error_counter++;
+
+    } else {
+
+      // TODO: add define if byteswap is needed
+      hmc_report.x = swap16(hmc_report.x);
+      hmc_report.y = swap16(hmc_report.y);
+      hmc_report.z = swap16(hmc_report.z);
+
+      m_sensor_data.field_x_ga = hmc_report.x * (1.0f / 1090.0f);
+      m_sensor_data.field_y_ga = hmc_report.y * (1.0f / 1090.0f);
+      m_sensor_data.field_z_ga = hmc_report.z * (1.0f / 1090.0f);
+      m_sensor_data.last_read_time_usec = DriverFramework::offsetTime();
+      m_sensor_data.read_counter++;
+
+      _publish(m_sensor_data);
     }
+  }
+
+#if !defined(__DF_OCPOC)
+  /* Request next measurement. */
+  uint8_t mode = HMC5883_BITS_MODE_SINGLE_MODE;
+  result = _writeReg(HMC5883_REG_MODE, &mode, sizeof(mode));
+
+  if (result != 0) {
+    // TODO: count it as an error and keep going
+    DF_LOG_ERR("error: setting sensor mode failed");
+  }
 
 #endif
-    _measurement_requested = true;
+  _measurement_requested = true;
 }

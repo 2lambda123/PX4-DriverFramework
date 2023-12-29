@@ -35,8 +35,7 @@
 
 #include "MagSensor.hpp"
 
-namespace DriverFramework
-{
+namespace DriverFramework {
 
 #define MAG_DEVICE_PATH "/dev/i2c-akm8963"
 
@@ -47,36 +46,33 @@ namespace DriverFramework
 
 #define AK8963_SLAVE_ADDRESS 0x0D
 
-
-class AK8963 : public MagSensor
-{
+class AK8963 : public MagSensor {
 public:
-    AK8963(const char *device_path) :
-        MagSensor(device_path, AK8963_MEASURE_INTERVAL_US)
-    {
-        m_id.dev_id_s.devtype = DRV_DF_DEVTYPE_AK8963;
-        m_id.dev_id_s.address = AK8963_SLAVE_ADDRESS;
-    }
+  AK8963(const char *device_path)
+      : MagSensor(device_path, AK8963_MEASURE_INTERVAL_US) {
+    m_id.dev_id_s.devtype = DRV_DF_DEVTYPE_AK8963;
+    m_id.dev_id_s.address = AK8963_SLAVE_ADDRESS;
+  }
 
-    // @return 0 on success, -errno on failure
-    virtual int start();
+  // @return 0 on success, -errno on failure
+  virtual int start();
 
-    // @return 0 on success, -errno on failure
-    virtual int stop();
+  // @return 0 on success, -errno on failure
+  virtual int stop();
 
 protected:
-    virtual void _measure();
-    virtual int _publish(struct mag_sensor_data &data) = 0;
+  virtual void _measure();
+  virtual int _publish(struct mag_sensor_data &data) = 0;
 
 private:
-    float _mag_sens_adj[3];
+  float _mag_sens_adj[3];
 
-    // returns 0 on success, -errno on failure
-    int ak8963_init();
-    int detect();
-    int get_sensitivity_adjustment();
-    int run_self_test();
-    bool in_range(float value, float min, float max);
+  // returns 0 on success, -errno on failure
+  int ak8963_init();
+  int detect();
+  int get_sensitivity_adjustment();
+  int run_self_test();
+  bool in_range(float value, float min, float max);
 };
 
 }; // namespace DriverFramework
