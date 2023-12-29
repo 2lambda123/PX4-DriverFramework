@@ -201,105 +201,105 @@ namespace DriverFramework
 
 #pragma pack(push, 1)
 struct fifo_packet {
-	int16_t accel_x;
-	int16_t accel_y;
-	int16_t accel_z;
-	int16_t temp;
-	int16_t gyro_x;
-	int16_t gyro_y;
-	int16_t gyro_z;
+    int16_t accel_x;
+    int16_t accel_y;
+    int16_t accel_z;
+    int16_t temp;
+    int16_t gyro_x;
+    int16_t gyro_y;
+    int16_t gyro_z;
 };
 struct fifo_packet_with_mag {
-	int16_t accel_x;
-	int16_t accel_y;
-	int16_t accel_z;
-	int16_t temp;
-	int16_t gyro_x;
-	int16_t gyro_y;
-	int16_t gyro_z;
-	char mag_st1; // 14 mag ST1 (1B)
-	int16_t mag_x; // 15-16 (2B)
-	int16_t mag_y; // 17-18 (2B)
-	int16_t mag_z; // 19-20 (2B)
-	char mag_st2; // 21 mag ST2 (1B)
+    int16_t accel_x;
+    int16_t accel_y;
+    int16_t accel_z;
+    int16_t temp;
+    int16_t gyro_x;
+    int16_t gyro_y;
+    int16_t gyro_z;
+    char mag_st1; // 14 mag ST1 (1B)
+    int16_t mag_x; // 15-16 (2B)
+    int16_t mag_y; // 17-18 (2B)
+    int16_t mag_z; // 19-20 (2B)
+    char mag_st2; // 21 mag ST2 (1B)
 };
 // This data structure is a copy of the segment of the above fifo_packet_with_mag data
 // struture that contains mag data.
 struct mag_data {
-	char mag_st1; // mag ST1 (1B)
-	int16_t mag_x; // uT (2B)
-	int16_t mag_y; // uT (2B)
-	int16_t mag_z; // uT (2B)
-	char mag_st2; // mag ST2 (1B)
+    char mag_st1; // mag ST1 (1B)
+    int16_t mag_x; // uT (2B)
+    int16_t mag_y; // uT (2B)
+    int16_t mag_z; // uT (2B)
+    char mag_st2; // mag ST2 (1B)
 };
 #pragma pack(pop)
 
 class MPU9250: public ImuSensor
 {
 public:
-	MPU9250(const char *device_path, bool mag_enabled = false) :
-		ImuSensor(device_path, MPU9250_MEASURE_INTERVAL_US, mag_enabled), // true = mag is enabled
-		_last_temp_c(0.0f),
-		_temp_initialized(false),
-		_mag_enabled(mag_enabled),
+    MPU9250(const char *device_path, bool mag_enabled = false) :
+        ImuSensor(device_path, MPU9250_MEASURE_INTERVAL_US, mag_enabled), // true = mag is enabled
+        _last_temp_c(0.0f),
+        _temp_initialized(false),
+        _mag_enabled(mag_enabled),
 #if defined(__DF_EDISON)
-		_packets_per_cycle_filtered(4.0f), // The FIFO is supposed to run at 1kHz and we sample at 250Hz.
+        _packets_per_cycle_filtered(4.0f), // The FIFO is supposed to run at 1kHz and we sample at 250Hz.
 #else
-		_packets_per_cycle_filtered(8.0f), // The FIFO is supposed to run at 8kHz and we sample at 1kHz.
+        _packets_per_cycle_filtered(8.0f), // The FIFO is supposed to run at 8kHz and we sample at 1kHz.
 #endif
-		_mag(nullptr)
-	{
-		m_id.dev_id_s.devtype = DRV_DF_DEVTYPE_MPU9250;
-		// TODO: does the WHOAMI make sense as an address?
-		m_id.dev_id_s.address = MPU_WHOAMI_9250;
-	}
+        _mag(nullptr)
+    {
+        m_id.dev_id_s.devtype = DRV_DF_DEVTYPE_MPU9250;
+        // TODO: does the WHOAMI make sense as an address?
+        m_id.dev_id_s.address = MPU_WHOAMI_9250;
+    }
 
-	// @return 0 on success, -errno on failure
-	int writeReg(int reg, uint8_t val)
-	{
-		return _writeReg(reg, val);
-	}
+    // @return 0 on success, -errno on failure
+    int writeReg(int reg, uint8_t val)
+    {
+        return _writeReg(reg, val);
+    }
 
-	int readReg(uint8_t address, uint8_t &val)
-	{
-		return _readReg(address, val);
-	}
+    int readReg(uint8_t address, uint8_t &val)
+    {
+        return _readReg(address, val);
+    }
 
-	int modifyReg(uint8_t address, uint8_t clearbits, uint8_t setbits)
-	{
-		return _modifyReg(address, clearbits, setbits);
-	}
+    int modifyReg(uint8_t address, uint8_t clearbits, uint8_t setbits)
+    {
+        return _modifyReg(address, clearbits, setbits);
+    }
 
-	// @return 0 on success, -errno on failure
-	virtual int start() override;
+    // @return 0 on success, -errno on failure
+    virtual int start() override;
 
-	// @return 0 on success, -errno on failure
-	virtual int stop() override;
+    // @return 0 on success, -errno on failure
+    virtual int stop() override;
 
 protected:
-	virtual void _measure() override;
-	virtual int _publish(struct imu_sensor_data &data) = 0;
+    virtual void _measure() override;
+    virtual int _publish(struct imu_sensor_data &data) = 0;
 
 private:
-	// @returns 0 on success, -errno on failure
-	int mpu9250_init();
+    // @returns 0 on success, -errno on failure
+    int mpu9250_init();
 
-	// @returns 0 on success, -errno on failure
-	int mpu9250_deinit();
+    // @returns 0 on success, -errno on failure
+    int mpu9250_deinit();
 
-	// @return the number of FIFO bytes to collect
-	int get_fifo_count();
+    // @return the number of FIFO bytes to collect
+    int get_fifo_count();
 
-	void reset_fifo();
+    void reset_fifo();
 
-	void clear_int_status();
+    void clear_int_status();
 
-	float _last_temp_c;
-	bool _temp_initialized;
-	bool _mag_enabled;
-	float _packets_per_cycle_filtered;
+    float _last_temp_c;
+    bool _temp_initialized;
+    bool _mag_enabled;
+    float _packets_per_cycle_filtered;
 
-	MPU9250_mag *_mag;
+    MPU9250_mag *_mag;
 };
 
 }

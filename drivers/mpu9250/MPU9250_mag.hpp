@@ -79,104 +79,104 @@ class MPU9250;
 #define MAG_RAW_TO_GAUSS 	 (0.15f / 100.0f)
 
 enum mag_sample_rate_e {
-	MPU9250_MAG_SAMPLE_RATE_8HZ = 0,
-	MPU9250_MAG_SAMPLE_RATE_100HZ = 1,
-	NUM_MPU9250_MAG_SAMPLE_RATES
+    MPU9250_MAG_SAMPLE_RATE_8HZ = 0,
+    MPU9250_MAG_SAMPLE_RATE_100HZ = 1,
+    NUM_MPU9250_MAG_SAMPLE_RATES
 };
 
 class MPU9250_mag
 {
 public:
-	MPU9250_mag(MPU9250 &imu, enum mag_sample_rate_e sample_rate) :
-		_mag_initialized(false), _sample_rate(sample_rate), _imu(imu)
-	{
-	}
+    MPU9250_mag(MPU9250 &imu, enum mag_sample_rate_e sample_rate) :
+        _mag_initialized(false), _sample_rate(sample_rate), _imu(imu)
+    {
+    }
 
-	// @brief
-	// Called to initialize the magnetometer connection via the
-	// internal I2C bus of the sensor.  The gyro and accelerometer
-	// must have been previously configured.
-	// @return
-	// - 0 on success,
-	// - -errno on failure
-	int initialize(int output_data_rate_in_hz);
+    // @brief
+    // Called to initialize the magnetometer connection via the
+    // internal I2C bus of the sensor.  The gyro and accelerometer
+    // must have been previously configured.
+    // @return
+    // - 0 on success,
+    // - -errno on failure
+    int initialize(int output_data_rate_in_hz);
 
-	// @brief
-	// Reads the sensitivity values contained in the FUSE memory of the mag and
-	// generates values used internally to process mag measurements.
-	// @return
-	// - 0 on success, -
-	// errno on failure
-	int get_sensitivity_adjustment(void);
+    // @brief
+    // Reads the sensitivity values contained in the FUSE memory of the mag and
+    // generates values used internally to process mag measurements.
+    // @return
+    // - 0 on success, -
+    // errno on failure
+    int get_sensitivity_adjustment(void);
 
-	// @brief
-	// Verifies the presence of the mag on the internal I2C bus, by querying
-	// for the known device ID.
-	// @return
-	// - 0 on success
-	// - -errno on failure
-	int detect(void);
+    // @brief
+    // Verifies the presence of the mag on the internal I2C bus, by querying
+    // for the known device ID.
+    // @return
+    // - 0 on success
+    // - -errno on failure
+    int detect(void);
 
-	// @brief
-	// Writes a value to the specified IMU register, and verifies that it was
-	// successfully written by attempting to read it back.
-	// @return
-	// - 0 on success
-	// - -errno on failure
-	int write_imu_reg_verified(int reg, uint8_t val, uint8_t mask);
+    // @brief
+    // Writes a value to the specified IMU register, and verifies that it was
+    // successfully written by attempting to read it back.
+    // @return
+    // - 0 on success
+    // - -errno on failure
+    int write_imu_reg_verified(int reg, uint8_t val, uint8_t mask);
 
-	// @brief
-	// Reads the value of the specified magnetometer register and returns the
-	// register value in the "val" parameter.
-	// @return
-	// - 0 on success
-	// - -errno on failure
-	int read_reg(uint8_t reg, uint8_t *val);
+    // @brief
+    // Reads the value of the specified magnetometer register and returns the
+    // register value in the "val" parameter.
+    // @return
+    // - 0 on success
+    // - -errno on failure
+    int read_reg(uint8_t reg, uint8_t *val);
 
-	// @brief
-	// Writes the value passed in to the specified magnetometer register.
-	// @return
-	// - 0 on success
-	// - -errno on failure
-	int write_reg(uint8_t reg, uint8_t val);
+    // @brief
+    // Writes the value passed in to the specified magnetometer register.
+    // @return
+    // - 0 on success
+    // - -errno on failure
+    int write_reg(uint8_t reg, uint8_t val);
 
-	// @brief
-	// Process the data passed in to generate mag values in Gauss units.
-	// @param mag_ga_x: Use to return mag value in Gauss for x
-	// @param mag_ga_y: Use to return mag value in Gauss for y
-	// @param mag_ga_z: Use to return mag value in Gauss for z
-	// @return
-	// - 0 on success
-	// - -errno on failure
-	int process(const struct mag_data &data, float &mag_ga_x, float &mag_ga_y, float &mag_ga_z);
+    // @brief
+    // Process the data passed in to generate mag values in Gauss units.
+    // @param mag_ga_x: Use to return mag value in Gauss for x
+    // @param mag_ga_y: Use to return mag value in Gauss for y
+    // @param mag_ga_z: Use to return mag value in Gauss for z
+    // @return
+    // - 0 on success
+    // - -errno on failure
+    int process(const struct mag_data &data, float &mag_ga_x, float &mag_ga_y, float &mag_ga_z);
 
 protected:
-	// @brief
-	// Used internally to perform a complete mag initialization.  Called
-	// multiple times by the initialize() function if the first initialization
-	// attempt fails.
-	// @param
-	// output_data_rate_in_hz
-	// The rate at which the sensor produces new IMU data (accel, gyro, and temperature data)
-	// @return
-	// - 0 on success
-	// - -errno on failure
-	int _initialize(int output_data_rate_in_hz);
+    // @brief
+    // Used internally to perform a complete mag initialization.  Called
+    // multiple times by the initialize() function if the first initialization
+    // attempt fails.
+    // @param
+    // output_data_rate_in_hz
+    // The rate at which the sensor produces new IMU data (accel, gyro, and temperature data)
+    // @return
+    // - 0 on success
+    // - -errno on failure
+    int _initialize(int output_data_rate_in_hz);
 
-	// @brief
-	// Convert the magnetometer sample rate enum to an equivalent number in Hz.
-	// @return
-	// - 0 on success
-	// - -errno on failure
-	int _convert_sample_rate_enum_to_hz(enum mag_sample_rate_e sample_rate);
+    // @brief
+    // Convert the magnetometer sample rate enum to an equivalent number in Hz.
+    // @return
+    // - 0 on success
+    // - -errno on failure
+    int _convert_sample_rate_enum_to_hz(enum mag_sample_rate_e sample_rate);
 
 private:
-	float _mag_sens_adj[3];
-	bool _mag_initialized;
-	mag_sample_rate_e _sample_rate;
+    float _mag_sens_adj[3];
+    bool _mag_initialized;
+    mag_sample_rate_e _sample_rate;
 
-	// Internal reference to the MPU9250 object that instantiated this mag class.
-	MPU9250 &_imu;
+    // Internal reference to the MPU9250 object that instantiated this mag class.
+    MPU9250 &_imu;
 };
 
 }

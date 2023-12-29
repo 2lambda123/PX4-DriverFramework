@@ -81,327 +81,327 @@ using namespace DriverFramework;
 
 int AK8963::detect()
 {
-	uint8_t b = 0;
+    uint8_t b = 0;
 
-	// get mag version ID
-	int retVal = _readReg(AK8963_REG_WIA, &b, 1);
+    // get mag version ID
+    int retVal = _readReg(AK8963_REG_WIA, &b, 1);
 
-	if (retVal != 0) {
-		DF_LOG_ERR("error reading mag whoami reg: %d", retVal);
-		return -1;
-	}
+    if (retVal != 0) {
+        DF_LOG_ERR("error reading mag whoami reg: %d", retVal);
+        return -1;
+    }
 
-	if (b != AK8963_DEV_ID) {
-		DF_LOG_ERR("wrong mag ID %u (expected %u)", b, AK8963_DEV_ID);
-		return -1;
-	}
+    if (b != AK8963_DEV_ID) {
+        DF_LOG_ERR("wrong mag ID %u (expected %u)", b, AK8963_DEV_ID);
+        return -1;
+    }
 
-	return 0;
+    return 0;
 }
 
 int AK8963::get_sensitivity_adjustment()
 {
-	// First set power-down mode
-	uint8_t bits = AK8963_BITS_CNTL1_MODE_POWER_DOWN;
+    // First set power-down mode
+    uint8_t bits = AK8963_BITS_CNTL1_MODE_POWER_DOWN;
 
-	if (_writeReg(AK8963_REG_CNTL1, &bits, 1) != 0) {
-		DF_LOG_ERR("Sensitivity: Set power down mode");
-		return -1;
-	}
+    if (_writeReg(AK8963_REG_CNTL1, &bits, 1) != 0) {
+        DF_LOG_ERR("Sensitivity: Set power down mode");
+        return -1;
+    }
 
-	usleep(10000);
+    usleep(10000);
 
-	// Enable FUSE ROM, since the sensitivity adjustment data is stored in
-	// compass registers 0x10, 0x11 and 0x12 which is only accessible in Fuse
-	// access mode.
-	bits = AK8963_BITS_CNTL1_MODE_ROM_ACCESS;
+    // Enable FUSE ROM, since the sensitivity adjustment data is stored in
+    // compass registers 0x10, 0x11 and 0x12 which is only accessible in Fuse
+    // access mode.
+    bits = AK8963_BITS_CNTL1_MODE_ROM_ACCESS;
 
-	if (_writeReg(AK8963_REG_CNTL1, &bits, 1) != 0) {
-		DF_LOG_ERR("Sensitivity: Set ROM access mode");
-		return -1;
-	}
+    if (_writeReg(AK8963_REG_CNTL1, &bits, 1) != 0) {
+        DF_LOG_ERR("Sensitivity: Set ROM access mode");
+        return -1;
+    }
 
-	usleep(10000);
+    usleep(10000);
 
-	// Get compass calibration register 0x10, 0x11, 0x12
-	// store into context.
-	uint8_t asa[3] = {0};
+    // Get compass calibration register 0x10, 0x11, 0x12
+    // store into context.
+    uint8_t asa[3] = {0};
 
-	if (_readReg(AK8963_REG_ASAX, asa, sizeof(asa)) != 0) {
-		return -1;
-	}
+    if (_readReg(AK8963_REG_ASAX, asa, sizeof(asa)) != 0) {
+        return -1;
+    }
 
-	for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i) {
 
-		float value = asa[i];
-		// H_adj = H * ((ASA-128)*0.5/128 + 1)
-		//       = H * ((ASA-128) / 256 + 1)
-		// H is the raw compass reading.
-		_mag_sens_adj[i] = (value - 128.0f) / 256.0f + 1.0f;
-	}
+        float value = asa[i];
+        // H_adj = H * ((ASA-128)*0.5/128 + 1)
+        //       = H * ((ASA-128) / 256 + 1)
+        // H is the raw compass reading.
+        _mag_sens_adj[i] = (value - 128.0f) / 256.0f + 1.0f;
+    }
 
-	// Leave in a power-down mode
-	bits = AK8963_BITS_CNTL1_MODE_POWER_DOWN;
+    // Leave in a power-down mode
+    bits = AK8963_BITS_CNTL1_MODE_POWER_DOWN;
 
-	if (_writeReg(AK8963_REG_CNTL1, &bits, 1) != 0) {
-		DF_LOG_ERR("Sensitivity: Set power down mode");
-		return -1;
-	}
+    if (_writeReg(AK8963_REG_CNTL1, &bits, 1) != 0) {
+        DF_LOG_ERR("Sensitivity: Set power down mode");
+        return -1;
+    }
 
-	usleep(10000);
+    usleep(10000);
 
-	return 0;
+    return 0;
 }
 
 bool AK8963::in_range(float value, float min, float max)
 {
-	return (min <= value) && (value <= max);
+    return (min <= value) && (value <= max);
 }
 
 int AK8963::run_self_test()
 {
 
-	uint8_t bits = AK8963_BITS_CNTL1_MODE_POWER_DOWN;
+    uint8_t bits = AK8963_BITS_CNTL1_MODE_POWER_DOWN;
 
-	if (_writeReg(AK8963_REG_CNTL1, &bits, 1) != 0) {
-		DF_LOG_ERR("Test: Set power down mode");
-		return -1;
-	}
+    if (_writeReg(AK8963_REG_CNTL1, &bits, 1) != 0) {
+        DF_LOG_ERR("Test: Set power down mode");
+        return -1;
+    }
 
-	usleep(1000);
-	bits = AK8963_BITS_ASTC_SELF_TEST;
+    usleep(1000);
+    bits = AK8963_BITS_ASTC_SELF_TEST;
 
-	if (_writeReg(AK8963_REG_ASTC, &bits, 1) != 0) {
-		DF_LOG_ERR("Test: Set self test");
-		return -1;
-	}
+    if (_writeReg(AK8963_REG_ASTC, &bits, 1) != 0) {
+        DF_LOG_ERR("Test: Set self test");
+        return -1;
+    }
 
-	usleep(1000);
-	bits = AK8963_BITS_CNTL1_MODE_SELF_TEST | AK8963_BITS_CNTL1_OUTPUT_16BIT;
+    usleep(1000);
+    bits = AK8963_BITS_CNTL1_MODE_SELF_TEST | AK8963_BITS_CNTL1_OUTPUT_16BIT;
 
-	if (_writeReg(AK8963_REG_CNTL1, &bits, 1) != 0) {
-		DF_LOG_ERR("Sensitivity: Set self test mode");
-		return -1;
-	}
+    if (_writeReg(AK8963_REG_CNTL1, &bits, 1) != 0) {
+        DF_LOG_ERR("Sensitivity: Set self test mode");
+        return -1;
+    }
 
-	usleep(1000);
+    usleep(1000);
 
 #pragma pack(push, 1)
-	struct { /* status register and data as read back from the device */
-		int16_t		x;
-		int16_t		y;
-		int16_t		z;
-	}	ak8963_report {};
+    struct { /* status register and data as read back from the device */
+        int16_t		x;
+        int16_t		y;
+        int16_t		z;
+    }	ak8963_report {};
 #pragma pack(pop)
 
-	bool ready = false;
+    bool ready = false;
 
-	while (!ready) {
-		int result = _readReg(AK8963_REG_ST1, &bits, 1);
+    while (!ready) {
+        int result = _readReg(AK8963_REG_ST1, &bits, 1);
 
-		if (result != 0) {
-			DF_LOG_ERR("Error reading status");
-			return -1;
-		}
+        if (result != 0) {
+            DF_LOG_ERR("Error reading status");
+            return -1;
+        }
 
-		if (bits & AK8963_BITS_ST1_DRDY) {
-			ready = true;
-		}
+        if (bits & AK8963_BITS_ST1_DRDY) {
+            ready = true;
+        }
 
-		usleep(100);
-	}
+        usleep(100);
+    }
 
-	int result = _readReg(AK8963_REG_DATA_X_MSB, (uint8_t *)&ak8963_report, sizeof(ak8963_report));
+    int result = _readReg(AK8963_REG_DATA_X_MSB, (uint8_t *)&ak8963_report, sizeof(ak8963_report));
 
-	// Check if the measurements are in reasonable range (see the data sheet)
-	int passed_test = -1;
+    // Check if the measurements are in reasonable range (see the data sheet)
+    int passed_test = -1;
 
-	if (in_range(ak8963_report.x * _mag_sens_adj[0], -200.0, 200.0)
-	    && in_range(ak8963_report.y * _mag_sens_adj[1], -200.0, 200.0)
-	    && in_range(ak8963_report.z * _mag_sens_adj[2], -3200.0, -800.0)) {
-		DF_LOG_INFO("Selftest passed!");
-		passed_test = 0;
+    if (in_range(ak8963_report.x * _mag_sens_adj[0], -200.0, 200.0)
+            && in_range(ak8963_report.y * _mag_sens_adj[1], -200.0, 200.0)
+            && in_range(ak8963_report.z * _mag_sens_adj[2], -3200.0, -800.0)) {
+        DF_LOG_INFO("Selftest passed!");
+        passed_test = 0;
 
-	} else {
-		DF_LOG_ERR("Selftest failed!");
-		passed_test = -1;
-	}
+    } else {
+        DF_LOG_ERR("Selftest failed!");
+        passed_test = -1;
+    }
 
-	if (result != 0) {
-		DF_LOG_ERR("Error reading data");
-		return -1;
-	}
+    if (result != 0) {
+        DF_LOG_ERR("Error reading data");
+        return -1;
+    }
 
-	bits = AK8963_BITS_ASTC_NORMAL;
+    bits = AK8963_BITS_ASTC_NORMAL;
 
-	if (_writeReg(AK8963_REG_ASTC, &bits, 1) != 0) {
-		DF_LOG_ERR("Test: Set self test");
-		return -1;
-	}
+    if (_writeReg(AK8963_REG_ASTC, &bits, 1) != 0) {
+        DF_LOG_ERR("Test: Set self test");
+        return -1;
+    }
 
-	usleep(1000);
-	bits = AK8963_BITS_CNTL1_MODE_POWER_DOWN;
+    usleep(1000);
+    bits = AK8963_BITS_CNTL1_MODE_POWER_DOWN;
 
-	if (_writeReg(AK8963_REG_CNTL1, &bits, 1) != 0) {
-		DF_LOG_ERR("Test: Set power down mode");
-		return -1;
-	}
+    if (_writeReg(AK8963_REG_CNTL1, &bits, 1) != 0) {
+        DF_LOG_ERR("Test: Set power down mode");
+        return -1;
+    }
 
-	usleep(1000);
-	return passed_test;
+    usleep(1000);
+    return passed_test;
 }
 
 int AK8963::ak8963_init()
 {
 
-	/* Zero the struct */
-	m_sensor_data.last_read_time_usec = 0;
-	m_sensor_data.read_counter = 0;
-	m_sensor_data.error_counter = 0;
+    /* Zero the struct */
+    m_sensor_data.last_read_time_usec = 0;
+    m_sensor_data.read_counter = 0;
+    m_sensor_data.error_counter = 0;
 
-	// Perform soft-reset
-	uint8_t bits = AK8963_BITS_CNTL2_SOFT_RESET;
-	int result = _writeReg(AK8963_REG_CNTL2, &bits, 1);
+    // Perform soft-reset
+    uint8_t bits = AK8963_BITS_CNTL2_SOFT_RESET;
+    int result = _writeReg(AK8963_REG_CNTL2, &bits, 1);
 
-	if (result < 0) {
-		DF_LOG_ERR("AK8963 soft reset failed.");
-		return -1;
-	}
+    if (result < 0) {
+        DF_LOG_ERR("AK8963 soft reset failed.");
+        return -1;
+    }
 
-	usleep(1000);
+    usleep(1000);
 
-	// Detect mag presence by reading whoami register
-	if (detect() != 0) {
-		DF_LOG_ERR("AK8963 mag not detected.");
-		return -1;
-	}
+    // Detect mag presence by reading whoami register
+    if (detect() != 0) {
+        DF_LOG_ERR("AK8963 mag not detected.");
+        return -1;
+    }
 
-	// Get mag calibraion data from Fuse ROM
-	if (get_sensitivity_adjustment() != 0) {
-		DF_LOG_ERR("Unable to read mag sensitivity adjustment");
-		return -1;
-	}
+    // Get mag calibraion data from Fuse ROM
+    if (get_sensitivity_adjustment() != 0) {
+        DF_LOG_ERR("Unable to read mag sensitivity adjustment");
+        return -1;
+    }
 
-	// Power on and configure the mag to produce 16 bit data in continuous measurement mode.
-	bits = AK8963_BITS_CNTL1_OUTPUT_16BIT | AK8963_BITS_CNTL1_MODE_CONTINOUS2;
-	result = _writeReg(AK8963_REG_CNTL1, &bits, 1);
+    // Power on and configure the mag to produce 16 bit data in continuous measurement mode.
+    bits = AK8963_BITS_CNTL1_OUTPUT_16BIT | AK8963_BITS_CNTL1_MODE_CONTINOUS2;
+    result = _writeReg(AK8963_REG_CNTL1, &bits, 1);
 
-	if (result != 0) {
-		DF_LOG_ERR("Unable to configure the magnetometer mode.");
-	}
+    if (result != 0) {
+        DF_LOG_ERR("Unable to configure the magnetometer mode.");
+    }
 
-	usleep(1000);
-	return 0;
+    usleep(1000);
+    return 0;
 }
 
 int AK8963::start()
 {
-	int result = I2CDevObj::start();
+    int result = I2CDevObj::start();
 
-	if (result != 0) {
-		DF_LOG_ERR("error: could not start DevObj");
-		goto exit;
-	}
+    if (result != 0) {
+        DF_LOG_ERR("error: could not start DevObj");
+        goto exit;
+    }
 
-	/* Configure the I2C bus parameters for the mag sensor. */
-	result = _setSlaveConfig(AK8963_SLAVE_ADDRESS,
-				 AK8963_BUS_FREQUENCY_IN_KHZ,
-				 AK8963_TRANSFER_TIMEOUT_IN_USECS);
+    /* Configure the I2C bus parameters for the mag sensor. */
+    result = _setSlaveConfig(AK8963_SLAVE_ADDRESS,
+                             AK8963_BUS_FREQUENCY_IN_KHZ,
+                             AK8963_TRANSFER_TIMEOUT_IN_USECS);
 
-	if (result != 0) {
-		DF_LOG_ERR("I2C slave configuration failed");
-		goto exit;
-	}
+    if (result != 0) {
+        DF_LOG_ERR("I2C slave configuration failed");
+        goto exit;
+    }
 
-	/* Initialize the mag sensor. */
-	result = ak8963_init();
+    /* Initialize the mag sensor. */
+    result = ak8963_init();
 
-	if (result != 0) {
-		DF_LOG_ERR("error: mag sensor initialization failed, sensor read thread not started");
-		goto exit;
-	}
+    if (result != 0) {
+        DF_LOG_ERR("error: mag sensor initialization failed, sensor read thread not started");
+        goto exit;
+    }
 
 
-	result = DevObj::start();
+    result = DevObj::start();
 
-	if (result != 0) {
-		DF_LOG_ERR("error: could not start DevObj");
-		goto exit;
-	}
+    if (result != 0) {
+        DF_LOG_ERR("error: could not start DevObj");
+        goto exit;
+    }
 
 exit:
-	return result;
+    return result;
 }
 
 int AK8963::stop()
 {
-	// Leave in a power-down mode
-	uint8_t bits = AK8963_BITS_CNTL1_MODE_POWER_DOWN;
+    // Leave in a power-down mode
+    uint8_t bits = AK8963_BITS_CNTL1_MODE_POWER_DOWN;
 
-	if (_writeReg(AK8963_REG_CNTL1, &bits, 1) != 0) {
-		DF_LOG_ERR("Sensitivity: Set power down mode");
-		return -1;
-	}
+    if (_writeReg(AK8963_REG_CNTL1, &bits, 1) != 0) {
+        DF_LOG_ERR("Sensitivity: Set power down mode");
+        return -1;
+    }
 
-	usleep(10000);
+    usleep(10000);
 
-	int result = DevObj::stop();
+    int result = DevObj::stop();
 
-	if (result != 0) {
-		DF_LOG_ERR("DevObj stop failed");
-		return result;
-	}
+    if (result != 0) {
+        DF_LOG_ERR("DevObj stop failed");
+        return result;
+    }
 
-	return 0;
+    return 0;
 }
 
 void AK8963::_measure()
 {
 #pragma pack(push, 1)
-	struct sample {
-		int16_t val[3];
-		uint8_t st2;
-	};
+    struct sample {
+        int16_t val[3];
+        uint8_t st2;
+    };
 #pragma pack(pop)
-	struct sample ak8963_report {};
+    struct sample ak8963_report {};
 
-	uint8_t bits = 0;
-	int result = _readReg(AK8963_REG_ST1, &bits, 1);
+    uint8_t bits = 0;
+    int result = _readReg(AK8963_REG_ST1, &bits, 1);
 
-	if (result != 0) {
-		DF_LOG_ERR("Error reading status");
-		m_sensor_data.error_counter++;
-		return;
-	}
+    if (result != 0) {
+        DF_LOG_ERR("Error reading status");
+        m_sensor_data.error_counter++;
+        return;
+    }
 
-	if (bits & AK8963_BITS_ST1_DRDY) {
+    if (bits & AK8963_BITS_ST1_DRDY) {
 
-		if (bits & AK8963_BITS_ST1_DOR) {
-			DF_LOG_INFO("Skipped data");
-		}
+        if (bits & AK8963_BITS_ST1_DOR) {
+            DF_LOG_INFO("Skipped data");
+        }
 
-		result = _readReg(AK8963_REG_DATA_X_MSB, (uint8_t *)&ak8963_report, sizeof(ak8963_report));
+        result = _readReg(AK8963_REG_DATA_X_MSB, (uint8_t *)&ak8963_report, sizeof(ak8963_report));
 
-		if (result != 0) {
-			DF_LOG_ERR("Error reading data");
-			m_sensor_data.error_counter++;
-			return;
-		}
+        if (result != 0) {
+            DF_LOG_ERR("Error reading data");
+            m_sensor_data.error_counter++;
+            return;
+        }
 
-		if (ak8963_report.st2 & AK8963_BITS_ST2_HOFL) {
-			DF_LOG_ERR("Magnetic sensor overflow");
-			m_sensor_data.error_counter++;
-			return;
-		}
+        if (ak8963_report.st2 & AK8963_BITS_ST2_HOFL) {
+            DF_LOG_ERR("Magnetic sensor overflow");
+            m_sensor_data.error_counter++;
+            return;
+        }
 
-		m_sensor_data.field_x_ga = static_cast<float>(ak8963_report.val[0]) * _mag_sens_adj[0] * MAG_RAW_TO_GAUSS;
-		m_sensor_data.field_y_ga = static_cast<float>(ak8963_report.val[1]) * _mag_sens_adj[1] * MAG_RAW_TO_GAUSS;
-		m_sensor_data.field_z_ga = static_cast<float>(ak8963_report.val[2]) * _mag_sens_adj[2] * MAG_RAW_TO_GAUSS;
-		m_sensor_data.last_read_time_usec = DriverFramework::offsetTime();
-		m_sensor_data.read_counter++;
+        m_sensor_data.field_x_ga = static_cast<float>(ak8963_report.val[0]) * _mag_sens_adj[0] * MAG_RAW_TO_GAUSS;
+        m_sensor_data.field_y_ga = static_cast<float>(ak8963_report.val[1]) * _mag_sens_adj[1] * MAG_RAW_TO_GAUSS;
+        m_sensor_data.field_z_ga = static_cast<float>(ak8963_report.val[2]) * _mag_sens_adj[2] * MAG_RAW_TO_GAUSS;
+        m_sensor_data.last_read_time_usec = DriverFramework::offsetTime();
+        m_sensor_data.read_counter++;
 
-		_publish(m_sensor_data);
-	}
+        _publish(m_sensor_data);
+    }
 
-	return;
+    return;
 }

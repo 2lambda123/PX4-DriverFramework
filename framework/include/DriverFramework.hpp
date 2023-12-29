@@ -83,15 +83,15 @@ void backtrace();
 class Framework
 {
 public:
-	// Initialize the driver framework
-	// This function must be called before any of the functions below
-	static int initialize();
+    // Initialize the driver framework
+    // This function must be called before any of the functions below
+    static int initialize();
 
-	// Terminate the driver framework
-	static void shutdown();
+    // Terminate the driver framework
+    static void shutdown();
 
-	// Block until shutdown requested
-	static void waitForShutdown();
+    // Block until shutdown requested
+    static void waitForShutdown();
 };
 
 }

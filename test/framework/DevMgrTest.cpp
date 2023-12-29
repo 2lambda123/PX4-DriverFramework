@@ -38,59 +38,59 @@
 
 bool DevMgrTest::verifyStart(TestDriver &test)
 {
-	// Register the driver
-	int ret = test.init();
+    // Register the driver
+    int ret = test.init();
 
-	if (ret < 0) {
-		DF_LOG_ERR("init() failed (%d))", ret);
-		return false;
-	}
+    if (ret < 0) {
+        DF_LOG_ERR("init() failed (%d))", ret);
+        return false;
+    }
 
-	// Start the driver
-	ret = test.start();
+    // Start the driver
+    ret = test.start();
 
-	if (ret < 0) {
-		DF_LOG_ERR("start() failed (%d)", ret);
-		return false;
-	}
+    if (ret < 0) {
+        DF_LOG_ERR("start() failed (%d)", ret);
+        return false;
+    }
 
-	usleep(1000);
-	return true;
+    usleep(1000);
+    return true;
 }
 
 bool DevMgrTest::verifyRegisterDriver()
 {
-	unsigned int index = 0;
-	const char *instname = nullptr;
-	bool found = false;
+    unsigned int index = 0;
+    const char *instname = nullptr;
+    bool found = false;
 
-	char devname[strlen(TEST_DRIVER_CLASS_PATH) + 3];
-	snprintf(devname, sizeof(devname), "%s%d", TEST_DRIVER_CLASS_PATH, 0);
+    char devname[strlen(TEST_DRIVER_CLASS_PATH) + 3];
+    snprintf(devname, sizeof(devname), "%s%d", TEST_DRIVER_CLASS_PATH, 0);
 
-	while (DevMgr::getNextDeviceName(index, &instname) == 0) {
-		if (instname && (strcmp(instname, devname) == 0)) {
-			found = true;
+    while (DevMgr::getNextDeviceName(index, &instname) == 0) {
+        if (instname && (strcmp(instname, devname) == 0)) {
+            found = true;
 
-		} else {
-			DF_LOG_INFO("Found device '%s'", instname == nullptr ? "undefined" : instname);
-		}
-	}
+        } else {
+            DF_LOG_INFO("Found device '%s'", instname == nullptr ? "undefined" : instname);
+        }
+    }
 
-	if (!found) {
-		DF_LOG_ERR("Device '%s' was not found", devname);
-		return false;
-	}
+    if (!found) {
+        DF_LOG_ERR("Device '%s' was not found", devname);
+        return false;
+    }
 
-	return true;
+    return true;
 
 }
 
 void DevMgrTest::_doTests()
 {
-	TestDriver test;
+    TestDriver test;
 
-	reportResult("Verify start()", verifyStart(test));
-	reportResult("Verify registerDriver()", verifyRegisterDriver());
+    reportResult("Verify start()", verifyStart(test));
+    reportResult("Verify registerDriver()", verifyRegisterDriver());
 
-	test.stop();
+    test.stop();
 }

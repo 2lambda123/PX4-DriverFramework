@@ -39,18 +39,18 @@ namespace DriverFramework
 {
 
 struct bmp280_sensor_calibration {
-	uint16_t dig_T1;
-	uint16_t dig_P1;
-	int16_t dig_T2;
-	int16_t dig_T3;
-	int16_t dig_P2;
-	int16_t dig_P3;
-	int16_t dig_P4;
-	int16_t dig_P5;
-	int16_t dig_P6;
-	int16_t dig_P7;
-	int16_t dig_P8;
-	int16_t dig_P9;
+    uint16_t dig_T1;
+    uint16_t dig_P1;
+    int16_t dig_T2;
+    int16_t dig_T3;
+    int16_t dig_P2;
+    int16_t dig_P3;
+    int16_t dig_P4;
+    int16_t dig_P5;
+    int16_t dig_P6;
+    int16_t dig_P7;
+    int16_t dig_P8;
+    int16_t dig_P9;
 };
 
 
@@ -74,40 +74,40 @@ struct bmp280_sensor_calibration {
 class BMP280 : public BaroSensor
 {
 public:
-	BMP280(const char *device_path) :
-		BaroSensor(device_path, BMP280_MEASURE_INTERVAL_US)
-	{
-		m_id.dev_id_s.devtype = DRV_DF_DEVTYPE_BMP280;
-		m_id.dev_id_s.address = BMP280_SLAVE_ADDRESS;
-	}
+    BMP280(const char *device_path) :
+        BaroSensor(device_path, BMP280_MEASURE_INTERVAL_US)
+    {
+        m_id.dev_id_s.devtype = DRV_DF_DEVTYPE_BMP280;
+        m_id.dev_id_s.address = BMP280_SLAVE_ADDRESS;
+    }
 
-	// @return 0 on success, -errno on failure
-	virtual int start() override;
+    // @return 0 on success, -errno on failure
+    virtual int start() override;
 
-	// @return 0 on success, -errno on failure
-	virtual int stop() override;
+    // @return 0 on success, -errno on failure
+    virtual int stop() override;
 
 protected:
-	virtual void _measure() override;
-	virtual int _publish(struct baro_sensor_data &data) = 0;
+    virtual void _measure() override;
+    virtual int _publish(struct baro_sensor_data &data) = 0;
 
 private:
-	// Returns pressure in Pa as unsigned 32 bit integer in
-	// Q24.8 format (24 integer bits and 8 fractional bits)
-	// Output value of “24674867” represents
-	// 24674867/256 = 96386.2 Pa = 963.862 hPa
-	uint32_t convertPressure(int64_t adc_pressure);
+    // Returns pressure in Pa as unsigned 32 bit integer in
+    // Q24.8 format (24 integer bits and 8 fractional bits)
+    // Output value of “24674867” represents
+    // 24674867/256 = 96386.2 Pa = 963.862 hPa
+    uint32_t convertPressure(int64_t adc_pressure);
 
-	// Returns temperature in DegC, resolution is 0.01 DegC
-	// Output value of “5123” equals 51.23 DegC
-	int32_t convertTemperature(int32_t adc_temperature);
+    // Returns temperature in DegC, resolution is 0.01 DegC
+    // Output value of “5123” equals 51.23 DegC
+    int32_t convertTemperature(int32_t adc_temperature);
 
-	int loadCalibration();
+    int loadCalibration();
 
-	// returns 0 on success, -errno on failure
-	int bmp280_init();
+    // returns 0 on success, -errno on failure
+    int bmp280_init();
 
-	struct bmp280_sensor_calibration 	m_sensor_calibration;
+    struct bmp280_sensor_calibration 	m_sensor_calibration;
 };
 
 }; // namespace DriverFramework

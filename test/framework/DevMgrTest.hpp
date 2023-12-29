@@ -44,15 +44,15 @@ using namespace DriverFramework;
 class DevMgrTest : public DFTestObj
 {
 public:
-	DevMgrTest() : DFTestObj("DevMgr Test") {}
-	~DevMgrTest() {}
+    DevMgrTest() : DFTestObj("DevMgr Test") {}
+    ~DevMgrTest() {}
 
 protected:
-	virtual void _doTests();
+    virtual void _doTests();
 
 private:
-	bool verifyStart(TestDriver &test);
-	bool verifyRegisterDriver();
+    bool verifyStart(TestDriver &test);
+    bool verifyRegisterDriver();
 
 };
 

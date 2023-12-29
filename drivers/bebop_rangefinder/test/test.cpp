@@ -40,56 +40,56 @@ using namespace DriverFramework;
 class BebopRangeFinderTester : public BebopRangeFinder
 {
 public:
-	static const int TEST_PASS = 0;
-	static const int TEST_FAIL = 1;
+    static const int TEST_PASS = 0;
+    static const int TEST_FAIL = 1;
 
-	BebopRangeFinderTester() : BebopRangeFinder(BEBOP_RANGEFINDER_DEVICE_PATH) {}
+    BebopRangeFinderTester() : BebopRangeFinder(BEBOP_RANGEFINDER_DEVICE_PATH) {}
 
-	int run();
+    int run();
 
 private:
-	int _publish(struct bebop_range &data);
+    int _publish(struct bebop_range &data);
 
-	int		m_pass;
-	bool	m_done = false;
+    int		m_pass;
+    bool	m_done = false;
 
 };
 
 int BebopRangeFinderTester::_publish(struct bebop_range &data)
 {
-	DF_LOG_INFO("Height measure: %fm", data.height_m);
+    DF_LOG_INFO("Height measure: %fm", data.height_m);
 
-	return 0;
+    return 0;
 }
 
 int BebopRangeFinderTester::run()
 {
 
-	init();
-	start();
+    init();
+    start();
 
-	// Get measurements for one second
-	usleep(1000000);
+    // Get measurements for one second
+    usleep(1000000);
 
-	stop();
-	return BebopRangeFinderTester::TEST_PASS;
+    stop();
+    return BebopRangeFinderTester::TEST_PASS;
 }
 
 int do_test()
 {
-	int ret = Framework::initialize();
+    int ret = Framework::initialize();
 
-	if (ret < 0) {
-		return ret;
-	}
+    if (ret < 0) {
+        return ret;
+    }
 
-	BebopRangeFinderTester pt;
+    BebopRangeFinderTester pt;
 
-	ret = pt.run();
+    ret = pt.run();
 
-	Framework::shutdown();
+    Framework::shutdown();
 
-	DF_LOG_INFO("Test %s", (ret == BebopRangeFinderTester::TEST_PASS) ? "PASSED" : "FAILED");
-	return ret;
+    DF_LOG_INFO("Test %s", (ret == BebopRangeFinderTester::TEST_PASS) ? "PASSED" : "FAILED");
+    return ret;
 }
 

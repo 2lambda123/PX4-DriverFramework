@@ -74,34 +74,34 @@ namespace DriverFramework
 class LTC2946 : public LtcSensor
 {
 public:
-	LTC2946(const char *device_path) :
-		LtcSensor(device_path, LTC2946_MEASURE_INTERVAL_US)
-	{
-		m_id.dev_id_s.devtype = DRV_DF_DEVTYPE_LTC2946;
-		m_id.dev_id_s.address = LTC2946_I2C_ADDRESS;
-	}
+    LTC2946(const char *device_path) :
+        LtcSensor(device_path, LTC2946_MEASURE_INTERVAL_US)
+    {
+        m_id.dev_id_s.devtype = DRV_DF_DEVTYPE_LTC2946;
+        m_id.dev_id_s.address = LTC2946_I2C_ADDRESS;
+    }
 
-	// @return 0 on success, -errno on failure
-	virtual int start();
+    // @return 0 on success, -errno on failure
+    virtual int start();
 
-	// @return 0 on success, -errno on failure
-	virtual int stop();
+    // @return 0 on success, -errno on failure
+    virtual int stop();
 
-	static void printValues(struct ltc2946_sensor_data &data);
-	static int getSensorData(DevHandle &h, struct ltc2946_sensor_data &out_data,
-				 bool is_new_data_required);
+    static void printValues(struct ltc2946_sensor_data &data);
+    static int getSensorData(DevHandle &h, struct ltc2946_sensor_data &out_data,
+                             bool is_new_data_required);
 
 protected:
-	virtual void _measure();
-	virtual int _publish(const struct ltc2946_sensor_data &data);
+    virtual void _measure();
+    virtual int _publish(const struct ltc2946_sensor_data &data);
 
-	struct ltc2946_sensor_data m_sensor_data;
-	SyncObj m_synchronize;
+    struct ltc2946_sensor_data m_sensor_data;
+    SyncObj m_synchronize;
 
 private:
-	// @returns 0 on success, -errno on failure
-	int ltc2946_init();
-	int configure();
+    // @returns 0 on success, -errno on failure
+    int ltc2946_init();
+    int configure();
 };
 
 #define LTC2946_I2C_MASS_WRITE      0xCC

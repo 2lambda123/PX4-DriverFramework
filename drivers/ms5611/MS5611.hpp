@@ -40,21 +40,21 @@ namespace DriverFramework
 {
 
 struct ms5611_sensor_calibration {
-	uint16_t factory_setup;
-	uint16_t c1_pressure_sens;
-	uint16_t c2_pressure_offset;
-	uint16_t c3_temp_coeff_pres_sens;
-	uint16_t c4_temp_coeff_pres_offset;
-	uint16_t c5_reference_temp;
-	uint16_t c6_temp_coeff_temp;
-	uint16_t serial_and_crc;
+    uint16_t factory_setup;
+    uint16_t c1_pressure_sens;
+    uint16_t c2_pressure_offset;
+    uint16_t c3_temp_coeff_pres_sens;
+    uint16_t c4_temp_coeff_pres_offset;
+    uint16_t c5_reference_temp;
+    uint16_t c6_temp_coeff_temp;
+    uint16_t serial_and_crc;
 };
 
 struct ms5611_sensor_measurement {
-	int32_t temperature_cc; // Temperature with 0.01 DegC resolution 2356 = 23.56 DegC
-	int64_t off; // Offset at actual temperature
-	int64_t sens; // Sensitivity at actual temperature
-	int32_t pressure_mbar; // Temperature compensated pressure with 0.01 mbar resolution
+    int32_t temperature_cc; // Temperature with 0.01 DegC resolution 2356 = 23.56 DegC
+    int64_t off; // Offset at actual temperature
+    int64_t sens; // Sensitivity at actual temperature
+    int32_t pressure_mbar; // Temperature compensated pressure with 0.01 mbar resolution
 };
 
 #if defined(__DF_OCPOC)
@@ -84,59 +84,59 @@ struct ms5611_sensor_measurement {
 class MS5611 : public BaroSensor
 {
 public:
-	MS5611(const char *device_path) :
-		BaroSensor(device_path, MS5611_MEASURE_INTERVAL_US / 2),
-		m_temperature_from_sensor(0),
-		m_pressure_from_sensor(0),
-		m_measure_phase(0)
-	{
-		m_id.dev_id_s.devtype = DRV_DF_DEVTYPE_MS5611;
-		m_id.dev_id_s.address = MS5611_SLAVE_ADDRESS;
-	}
+    MS5611(const char *device_path) :
+        BaroSensor(device_path, MS5611_MEASURE_INTERVAL_US / 2),
+        m_temperature_from_sensor(0),
+        m_pressure_from_sensor(0),
+        m_measure_phase(0)
+    {
+        m_id.dev_id_s.devtype = DRV_DF_DEVTYPE_MS5611;
+        m_id.dev_id_s.address = MS5611_SLAVE_ADDRESS;
+    }
 
-	virtual ~MS5611() = default;
+    virtual ~MS5611() = default;
 
-	// @return 0 on success, -errno on failure
-	virtual int start() override;
+    // @return 0 on success, -errno on failure
+    virtual int start() override;
 
-	// @return 0 on success, -errno on failure
-	virtual int stop() override;
+    // @return 0 on success, -errno on failure
+    virtual int stop() override;
 
 protected:
-	virtual void _measure() override;
-	virtual int _publish(struct baro_sensor_data &data) = 0;
+    virtual void _measure() override;
+    virtual int _publish(struct baro_sensor_data &data) = 0;
 
-	// Returns pressure in Pa as unsigned 32 bit integer
-	// Output value of “24674867” represents
-	// 24674867/100 = 246748.67 Pa = 24674867 hPa
-	int64_t convertPressure(int64_t adc_pressure);
+    // Returns pressure in Pa as unsigned 32 bit integer
+    // Output value of “24674867” represents
+    // 24674867/100 = 246748.67 Pa = 24674867 hPa
+    int64_t convertPressure(int64_t adc_pressure);
 
-	// Returns temperature in DegC, resolution is 0.01 DegC
-	// Output value of “5123” equals 51.23 DegC
-	virtual int32_t convertTemperature(int32_t adc_temperature);
+    // Returns temperature in DegC, resolution is 0.01 DegC
+    // Output value of “5123” equals 51.23 DegC
+    virtual int32_t convertTemperature(int32_t adc_temperature);
 
-	int loadCalibration();
+    int loadCalibration();
 
-	// Request to convert pressure or temperature data
-	int _request(uint8_t phase);
-	// Read out the requested sensor data
-	int _collect(uint32_t &raw);
+    // Request to convert pressure or temperature data
+    int _request(uint8_t phase);
+    // Read out the requested sensor data
+    int _collect(uint32_t &raw);
 
-	bool crc4(uint16_t *n_prom);
+    bool crc4(uint16_t *n_prom);
 
-	// returns 0 on success, -errno on failure
-	int ms5611_init();
+    // returns 0 on success, -errno on failure
+    int ms5611_init();
 
-	// Send reset to device
-	int reset();
+    // Send reset to device
+    int reset();
 
-	struct ms5611_sensor_calibration	m_sensor_calibration;
-	struct ms5611_sensor_measurement m_raw_sensor_convertion;
+    struct ms5611_sensor_calibration	m_sensor_calibration;
+    struct ms5611_sensor_measurement m_raw_sensor_convertion;
 
-	uint32_t m_temperature_from_sensor;
-	uint32_t m_pressure_from_sensor;
+    uint32_t m_temperature_from_sensor;
+    uint32_t m_pressure_from_sensor;
 
-	int m_measure_phase;
+    int m_measure_phase;
 };
 
 }; // namespace DriverFramework

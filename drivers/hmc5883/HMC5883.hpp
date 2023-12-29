@@ -60,34 +60,34 @@ namespace DriverFramework
 class HMC5883 : public MagSensor
 {
 public:
-	HMC5883(const char *device_path) :
-		MagSensor(device_path, HMC5883_MEASURE_INTERVAL_US),
-		_measurement_requested(false)
-	{
-		m_id.dev_id_s.devtype = DRV_DF_DEVTYPE_HMC5883;
-		m_id.dev_id_s.address = HMC5883_SLAVE_ADDRESS;
-	}
+    HMC5883(const char *device_path) :
+        MagSensor(device_path, HMC5883_MEASURE_INTERVAL_US),
+        _measurement_requested(false)
+    {
+        m_id.dev_id_s.devtype = DRV_DF_DEVTYPE_HMC5883;
+        m_id.dev_id_s.address = HMC5883_SLAVE_ADDRESS;
+    }
 
-	// @return 0 on success, -errno on failure
-	virtual int start();
+    // @return 0 on success, -errno on failure
+    virtual int start();
 
-	// @return 0 on success, -errno on failure
-	virtual int stop();
+    // @return 0 on success, -errno on failure
+    virtual int stop();
 
 protected:
-	virtual void _measure();
-	virtual int _publish(struct mag_sensor_data &data) = 0;
+    virtual void _measure();
+    virtual int _publish(struct mag_sensor_data &data) = 0;
 
 private:
-	int loadCalibration();
+    int loadCalibration();
 
-	// returns 0 on success, -errno on failure
-	int hmc5883_init();
+    // returns 0 on success, -errno on failure
+    int hmc5883_init();
 
-	//struct hmc5883_sensor_calibration 	m_sensor_calibration;
+    //struct hmc5883_sensor_calibration 	m_sensor_calibration;
 
-	// we need to request a measurement before we can collect it
-	bool _measurement_requested;
+    // we need to request a measurement before we can collect it
+    bool _measurement_requested;
 };
 
 }; // namespace DriverFramework

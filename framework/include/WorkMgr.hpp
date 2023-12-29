@@ -49,10 +49,10 @@ namespace DriverFramework
 class WorkHandle : public IntHandleObj
 {
 public:
-	WorkHandle() {}
+    WorkHandle() {}
 
-	virtual ~WorkHandle();
-	friend WorkMgr;
+    virtual ~WorkHandle();
+    friend WorkMgr;
 };
 
 typedef void (*WorkCallback)(void *arg);
@@ -73,20 +73,20 @@ class Framework;
 class WorkMgr
 {
 public:
-	// Interface functions
-	static void getWorkHandle(WorkCallback cb, void *arg, uint32_t delay_usec, WorkHandle &handle);
-	static void releaseWorkHandle(WorkHandle &handle);
-	static int schedule(WorkHandle &handle);
-	static void setError(WorkHandle &h, int error);
+    // Interface functions
+    static void getWorkHandle(WorkCallback cb, void *arg, uint32_t delay_usec, WorkHandle &handle);
+    static void releaseWorkHandle(WorkHandle &handle);
+    static int schedule(WorkHandle &handle);
+    static void setError(WorkHandle &h, int error);
 
 private:
-	friend class Framework;
+    friend class Framework;
 
-	static bool isValidHandle(const WorkHandle &h);
-	static int initialize();
-	static void finalize();
+    static bool isValidHandle(const WorkHandle &h);
+    static int initialize();
+    static void finalize();
 
-	static bool m_initialized;
+    static bool m_initialized;
 };
 
 }

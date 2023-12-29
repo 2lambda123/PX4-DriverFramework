@@ -53,41 +53,41 @@ namespace DriverFramework
 class MPU6050: public ImuSensor
 {
 public:
-	MPU6050(const char *device_path) :
-		ImuSensor(device_path, MPU6050_MEASURE_INTERVAL_US, false), // false = sensor has no mag
-		_last_temp_c(0.0f),
-		_temp_initialized(false),
-		_packets_per_cycle_filtered(1.0)
-	{
-		m_id.dev_id_s.devtype = DRV_DF_DEVTYPE_MPU6050;
-		m_id.dev_id_s.address = MPU6050_SLAVE_ADDRESS;
-	}
+    MPU6050(const char *device_path) :
+        ImuSensor(device_path, MPU6050_MEASURE_INTERVAL_US, false), // false = sensor has no mag
+        _last_temp_c(0.0f),
+        _temp_initialized(false),
+        _packets_per_cycle_filtered(1.0)
+    {
+        m_id.dev_id_s.devtype = DRV_DF_DEVTYPE_MPU6050;
+        m_id.dev_id_s.address = MPU6050_SLAVE_ADDRESS;
+    }
 
-	// @return 0 on success, -errno on failure
-	virtual int start();
+    // @return 0 on success, -errno on failure
+    virtual int start();
 
-	// @return 0 on success, -errno on failure
-	virtual int stop();
+    // @return 0 on success, -errno on failure
+    virtual int stop();
 
 protected:
-	virtual void _measure();
-	virtual int _publish(struct imu_sensor_data &data) = 0;
+    virtual void _measure();
+    virtual int _publish(struct imu_sensor_data &data) = 0;
 
 private:
-	// @returns 0 on success, -errno on failure
-	int mpu6050_init();
+    // @returns 0 on success, -errno on failure
+    int mpu6050_init();
 
-	// @returns 0 on success, -errno on failure
-	int mpu6050_deinit();
+    // @returns 0 on success, -errno on failure
+    int mpu6050_deinit();
 
-	// @return the number of FIFO bytes to collect
-	int get_fifo_count();
+    // @return the number of FIFO bytes to collect
+    int get_fifo_count();
 
-	void reset_fifo();
+    void reset_fifo();
 
-	float _last_temp_c;
-	bool _temp_initialized;
-	float _packets_per_cycle_filtered;
+    float _last_temp_c;
+    bool _temp_initialized;
+    float _packets_per_cycle_filtered;
 };
 
 }
