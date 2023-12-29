@@ -1,7 +1,7 @@
 ############################################################################
 # Cross-compilation Toolchain File (CMAKE_TOOLCHAIN_FILE)
 # for OcPoC-Zynq-Mini
-# 
+#
 # Requires Xilinx petalinux-v2015.4-final. Define an $ENV variable by adding
 # the following line to .bashrc:
 # export OCPOC_TOOLCHAIN_DIR="<path_to_petalinux>/petalinux-v2015.4-final/tools/linux-i386/arm-xilinx-linux-gnueabi/bin"
