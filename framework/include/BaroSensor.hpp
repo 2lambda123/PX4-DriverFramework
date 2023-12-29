@@ -35,7 +35,16 @@
 
 #include <stdint.h>
 #include "SyncObj.hpp"
+
+#if defined(__DF_OCPOC)
+#define __BARO_USE_SPI
+#endif
+
+#if defined(__BARO_USE_SPI)
+#include "SPIDevObj.hpp"
+#else
 #include "I2CDevObj.hpp"
+#endif
 
 #define BARO_CLASS_PATH  "/dev/baro"
 
@@ -54,43 +63,28 @@ struct baro_sensor_data {
 	uint64_t error_counter;		/*! the total number of errors detected when reading the pressure, since the system was started */
 };
 
+void printPressureValues(struct baro_sensor_data &data);
+
+#if defined(__BARO_USE_SPI)
+class BaroSensor : public SPIDevObj
+#else
 class BaroSensor : public I2CDevObj
+#endif
 {
 public:
 	BaroSensor(const char *device_path, unsigned int sample_interval_usec) :
+#if defined(__BARO_USE_SPI)
+		SPIDevObj("BaroSensor", device_path, BARO_CLASS_PATH, sample_interval_usec)
+#else
 		I2CDevObj("BaroSensor", device_path, BARO_CLASS_PATH, sample_interval_usec)
+#endif
 	{}
 
-	~BaroSensor() = default;
+	virtual ~BaroSensor() = default;
 
 	void setAltimeter(float altimeter_setting_in_mbars)
 	{
 		m_altimeter_mbars = altimeter_setting_in_mbars;
-	}
-
-	static int getSensorData(DevHandle &h, struct baro_sensor_data &out_data, bool is_new_data_required)
-	{
-		BaroSensor *me = DevMgr::getDevObjByHandle<BaroSensor>(h);
-		int ret = -1;
-
-		if (me != nullptr) {
-			me->m_synchronize.lock();
-
-			if (is_new_data_required) {
-				me->m_synchronize.waitOnSignal(0);
-			}
-
-			out_data = me->m_sensor_data;
-			me->m_synchronize.unlock();
-			ret = 0;
-		}
-
-		return ret;
-	}
-
-	static void printPressureValues(struct baro_sensor_data &data)
-	{
-		DF_LOG_INFO("Pressure: %.2f Pa, temperature: %.2f C", (double)data.pressure_pa, (double)data.temperature_c);
 	}
 
 protected:
@@ -98,7 +92,6 @@ protected:
 
 	struct baro_sensor_data	m_sensor_data {};
 	float 				m_altimeter_mbars{0.0f};
-	SyncObj 			m_synchronize;
 };
 
 }; // namespace DriverFramework

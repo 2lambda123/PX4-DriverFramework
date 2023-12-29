@@ -41,7 +41,7 @@
 #include "OSConfig.h"
 #include "DevIOCTL.h"
 
-#if defined(__DF_RPI) || defined(__DF_EDISON) || defined(__DF_BEBOP)
+#if defined(__DF_RPI) || defined(__DF_EDISON) || defined(__DF_BEBOP) || defined(__DF_OCPOC)
 #include <sys/ioctl.h>
 #include <linux/types.h>
 #include <alloca.h>
@@ -75,6 +75,7 @@ int SPIDevObj::stop()
 {
 	if (m_fd >= 0) {
 		int ret = ::close(m_fd);
+		m_fd = -1;
 
 		if (ret < 0) {
 			DF_LOG_ERR("Error: SPIDevObj::stop failed on ::close()");
@@ -99,7 +100,7 @@ int SPIDevObj::readReg(DevHandle &h, uint8_t address, uint8_t &val)
 
 int SPIDevObj::_readReg(uint8_t address, uint8_t &val)
 {
-#if defined(__DF_RPI) || defined(__DF_EDISON) || defined(__DF_BEBOP)
+#if defined(__DF_RPI) || defined(__DF_EDISON) || defined(__DF_BEBOP) || defined(__DF_OCPOC)
 	/* implement sensor interface via rpi2 spi */
 	// constexpr int transfer_bytes = 1 + 1; // first byte is address
 	uint8_t write_buffer[2] = {0}; // automatic write buffer
@@ -211,7 +212,7 @@ int SPIDevObj::_writeReg(uint8_t address, uint8_t val)
 
 int SPIDevObj::_writeReg(uint8_t address, uint8_t *in_buffer, uint16_t length)
 {
-#if defined(__DF_RPI) || defined(__DF_EDISON) || defined(__DF_BEBOP)
+#if defined(__DF_RPI) || defined(__DF_EDISON) || defined(__DF_BEBOP) || defined(__DF_OCPOC)
 	/* implement sensor interface via rpi2 spi */
 	uint8_t write_buffer[length + 1];// automatic write buffer: first byte is address
 	memset(&write_buffer, 0, length + 1);
@@ -280,9 +281,49 @@ int SPIDevObj::_modifyReg(uint8_t address, uint8_t clearbits, uint8_t setbits)
 	return _writeReg(address, val);
 }
 
+int SPIDevObj::_transfer(uint8_t *write_buffer, uint8_t *read_buffer, uint8_t len)
+{
+#if defined(__DF_OCPOC)
+	struct spi_ioc_transfer spi_transfer; // datastructures for linux spi interface
+	memset(&spi_transfer, 0, sizeof(spi_ioc_transfer));
+
+	write_buffer[0] |= DIR_WRITE; // write mode
+
+	spi_transfer.rx_buf = (unsigned long)read_buffer;
+	spi_transfer.len = len;
+	spi_transfer.tx_buf = (unsigned long)write_buffer;
+	// spi_transfer.speed_hz = SPI_FREQUENCY_1MHZ; // temporarily override spi speed
+	spi_transfer.bits_per_word = 8;
+	spi_transfer.delay_usecs = 0;
+
+	int result = 0;
+	result = ::ioctl(m_fd, SPI_IOC_MESSAGE(1), &spi_transfer);
+
+	if (result != len) {
+		DF_LOG_ERR("Error: SPI write failed. Reported %d bytes written (%d)", result, errno);
+		return -1;
+	}
+
+	return 0;
+
+#else
+	write_buffer[0] |=  DIR_WRITE;
+
+	/* Save the address of the register to read from in the write buffer for the combined write. */
+	int bytes_written = ::write(m_fd, (char *) write_buffer, len);
+
+	if (bytes_written != len) {
+		DF_LOG_ERR("Error: SPI write failed. Reported %d bytes written (%d)", bytes_written, errno);
+		return -1;
+	}
+
+	return 0;
+#endif
+}
+
 int SPIDevObj::bulkRead(DevHandle &h, uint8_t address, uint8_t *out_buffer, int length)
 {
-#if defined(__DF_RPI) || defined(__DF_EDISON) || defined(__DF_BEBOP)
+#if defined(__DF_RPI) || defined(__DF_EDISON) || defined(__DF_BEBOP) || defined(__DF_OCPOC)
 	/* implement sensor interface via rpi2 spi */
 	SPIDevObj *obj = DevMgr::getDevObjByHandle<SPIDevObj>(h);
 
@@ -322,7 +363,7 @@ int SPIDevObj::bulkRead(DevHandle &h, uint8_t address, uint8_t *out_buffer, int 
 
 int SPIDevObj::_bulkRead(uint8_t address, uint8_t *out_buffer, int length)
 {
-#if defined(__DF_RPI) || defined(__DF_EDISON) || defined(__DF_BEBOP)
+#if defined(__DF_RPI) || defined(__DF_EDISON) || defined(__DF_BEBOP) || defined(__DF_OCPOC)
 	DF_LOG_DEBUG("_bulkRead: length = %d", length);
 	/* implement sensor interface via rpi spi */
 	int transfer_bytes = 1 + length; // first byte is address
@@ -398,7 +439,7 @@ int SPIDevObj::_bulkRead(uint8_t address, uint8_t *out_buffer, int length)
 
 int SPIDevObj::setLoopbackMode(DevHandle &h, bool enable)
 {
-#if defined(__DF_RPI) || defined(__DF_EDISON) || defined(__DF_BEBOP)
+#if defined(__DF_RPI) || defined(__DF_EDISON) || defined(__DF_BEBOP) || defined(__DF_OCPOC)
 	/* implement sensor interface via rpi2 spi */
 	DF_LOG_ERR("ERROR: attempt to set loopback mode in software fails.");
 	return -1;
@@ -413,71 +454,10 @@ int SPIDevObj::setLoopbackMode(DevHandle &h, bool enable)
 #endif
 }
 
-int SPIDevObj::setBusFrequency(DevHandle &h, SPI_FREQUENCY freq_hz)
+int SPIDevObj::_setBusFrequency(uint32_t freq_hz)
 {
-#if defined(__DF_RPI) || defined(__DF_EDISON) || defined(__DF_BEBOP)
-	/* implement sensor interface via rpi2 spi */
-	SPIDevObj *obj = DevMgr::getDevObjByHandle<SPIDevObj>(h);
-
-	if (obj) {
-		return obj->_setBusFrequency(freq_hz);
-	}
-
-	return -1;
-
-#elif defined(__DF_QURT)
-	struct dspal_spi_ioctl_set_bus_frequency bus_freq;
-	bus_freq.bus_frequency_in_hz = freq_hz;
-	return h.ioctl(SPI_IOCTL_SET_BUS_FREQUENCY_IN_HZ, (unsigned long)&bus_freq);
-#else
-	return -1;
-#endif
-}
-
-int SPIDevObj::_setBusFrequency(SPI_FREQUENCY freq_hz)
-{
-#if defined(__DF_RPI) || defined(__DF_BEBOP)
-
-	/* implement sensor interface via rpi spi */
-	// RPI rounds down freq_hz to powers of 2
-	// Speeds available: 0.5, 1, 2, 4, 8, 16, and 32 MHz
-	// in-reality 32Mbs is the upper limit of the SPI clock on RPI.
-	switch (freq_hz) {
-	case SPI_FREQUENCY_320KHZ :
-		DF_LOG_DEBUG("SPI speed set to 320KHz.");
-		break;
-
-	case SPI_FREQUENCY_1MHZ :
-		DF_LOG_DEBUG("SPI speed set to 1MHz.");
-		break;
-
-	case SPI_FREQUENCY_5MHZ :
-		DF_LOG_DEBUG("SPI speed set to 4MHz instead of 5MHz.");
-		break;
-
-	case SPI_FREQUENCY_10MHZ :
-		DF_LOG_DEBUG("SPI speed set to 8MHz instead of 10MHz.");
-		break;
-
-	case SPI_FREQUENCY_15MHZ :
-		DF_LOG_DEBUG("SPI speed set to 8MHz instead of 15MHz.");
-		break;
-
-	case SPI_FREQUENCY_20MHZ :
-		DF_LOG_DEBUG("SPI speed set to 16MHz instead of 20MHz.");
-		break;
-
-	default :
-		DF_LOG_ERR("SPI speed value not enum SPI_FREQUENCY.");
-		break;
-	}
-
+#if defined(__DF_RPI) || defined(__DF_BEBOP) || defined(__DF_OCPOC) || defined(__DF_EDISON)
 	return ::ioctl(m_fd, SPI_IOC_WR_MAX_SPEED_HZ, &freq_hz);
-
-#elif defined(__DF_EDISON)
-	//Speeds available: many values less 8MHz and 12.5MHz, 25MHz.
-	return ::ioctl(m_fd, SPI_IOC_WR_MAX_SPEED_HZ, &freq_hz);
-
 #elif defined(__DF_QURT)
 	struct dspal_spi_ioctl_set_bus_frequency bus_freq;
 	bus_freq.bus_frequency_in_hz = freq_hz;

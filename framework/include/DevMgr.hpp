@@ -95,16 +95,10 @@ public:
 #endif
 	}
 
-	// Called by DevObj to notify threads waiting on an update
-	static void updateNotify(DevObj &obj);
-
 #endif
 
 	static void getHandle(const char *dev_path, DevHandle &handle);
 	static void releaseHandle(DevHandle &handle);
-
-	// Similar to poll
-	static int waitForUpdate(UpdateList &in_set, UpdateList &out_set, unsigned int timeout_ms);
 
 	static void setDevHandleError(DevHandle &h, int error);
 
@@ -115,8 +109,8 @@ private:
 	DevMgr();
 	~DevMgr();
 
-	static int initialize(void);
-	static void finalize(void);
+	static int initialize();
+	static void finalize();
 
 #ifndef __DF_NUTTX
 	static DevObj *_getDevObjByHandle(DevHandle &handle);

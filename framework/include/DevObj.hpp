@@ -87,9 +87,9 @@ public:
 
 	virtual int init();
 
-	virtual int start(void);
+	virtual int start();
 
-	virtual int stop(void);
+	virtual int stop();
 
 	void setSampleInterval(unsigned int sample_interval_usecs);
 
@@ -115,8 +115,6 @@ public:
 	virtual ssize_t devRead(void *buf, size_t count);
 
 	virtual ssize_t devWrite(const void *buf, size_t count);
-
-	void updateNotify();
 
 	// _measure() is the periodic callback that is called every
 	// m_sample_interval_usecs

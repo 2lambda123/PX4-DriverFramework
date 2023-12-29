@@ -1,6 +1,6 @@
 ############################################################################
 #
-# Copyright (c) 2015 Mark Charlebois. All rights reserved.
+# Copyright (c) 2016 Bharath Ramaswamy. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,17 +33,13 @@
 
 include(../../cmake/df_common.cmake)
 
-include_directories(../../framework/include)
+include_directories(
+	../../framework/include
+	)
 
-if("${DF_TARGET}" STREQUAL "ocpoc")
-else()
-	get_filename_component(drivername ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-	df_add_library(df_${drivername}
-		BMP280.cpp
-		)
+get_filename_component(drivername ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+df_add_library(df_${drivername}
+	LTC2946.cpp
+	)
 
-	if("${DF_ENABLE_TESTS}" STREQUAL "1")
-		add_subdirectory(test)
-	endif()
-endif()
 # vim: set noet fenc=utf-8 ff=unix ft=cmake :

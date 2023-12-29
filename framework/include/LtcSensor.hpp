@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (C) 2016 PX4 Development Team. All rights reserved.
+ *   Copyright (C) 2015 Mark Charlebois. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,65 +31,72 @@
  *
  ****************************************************************************/
 
+/***************************************************
+ * modified by Christoph Tobler <christoph@px4.io>
+ ***************************************************/
+
 #pragma once
 
-#define __IMU_USE_I2C
-#include "ImuSensor.hpp"
+#include <stdint.h>
+#include "SyncObj.hpp"
+#include "I2CDevObj.hpp"
 
-#define DRV_DF_DEVTYPE_MPU6050 0x45
+#define LTC2946_CLASS_PATH  "/dev/ltc"
 
-#define MPU_WHOAMI_6050		 0x68
-#define MPU6050_SLAVE_ADDRESS 0x68       /* 7-bit slave address */
-
-// update frequency 1000 Hz
-#define MPU6050_MEASURE_INTERVAL_US 1000
-
-#define MPU6050_BUS_FREQUENCY_IN_KHZ 400
-#define MPU6050_TRANSFER_TIMEOUT_IN_USECS 900
+#define LTC2946_MEASURE_INTERVAL_US 20000  // 1000000/50Hz
 
 namespace DriverFramework
 {
 
-class MPU6050: public ImuSensor
-{
-public:
-	MPU6050(const char *device_path) :
-		ImuSensor(device_path, MPU6050_MEASURE_INTERVAL_US, false), // false = sensor has no mag
-		_last_temp_c(0.0f),
-		_temp_initialized(false),
-		_packets_per_cycle_filtered(1.0)
-	{
-		m_id.dev_id_s.devtype = DRV_DF_DEVTYPE_MPU6050;
-		m_id.dev_id_s.address = MPU6050_SLAVE_ADDRESS;
-	}
+/** * The sensor independent data structure containing LTC2946 values. */
+struct ltc2946_sensor_data {
+	// 5V sensor
+	float board_voltage_V; // [V]
+	float board_current_A; // [A]
+	// Battery sensor
+	float battery_voltage_V; // [V]
+	float battery_current_A; // [A]
 
-	// @return 0 on success, -errno on failure
-	virtual int start();
-
-	// @return 0 on success, -errno on failure
-	virtual int stop();
-
-protected:
-	virtual void _measure();
-	virtual int _publish(struct imu_sensor_data &data) = 0;
-
-private:
-	// @returns 0 on success, -errno on failure
-	int mpu6050_init();
-
-	// @returns 0 on success, -errno on failure
-	int mpu6050_deinit();
-
-	// @return the number of FIFO bytes to collect
-	int get_fifo_count();
-
-	void reset_fifo();
-
-	float _last_temp_c;
-	bool _temp_initialized;
-	float _packets_per_cycle_filtered;
+	float remain;
+	uint64_t read_counter; /*! the total number of sensor readings since the system was started */
+	uint64_t error_counter;
 };
 
-}
-// namespace DriverFramework
+class LtcSensor : public I2CDevObj
+{
+public:
+	LtcSensor(const char *device_path, unsigned int sample_interval_usec) :
+		I2CDevObj("LtcSensor", device_path, LTC2946_CLASS_PATH, LTC2946_MEASURE_INTERVAL_US)
+	{}
 
+	~LtcSensor() {}
+
+	static int getSensorData(DevHandle &h, struct ltc2946_sensor_data &out_data, bool is_new_data_required)
+	{
+		LtcSensor *me = DevMgr::getDevObjByHandle<LtcSensor>(h);
+		int ret = -1;
+
+		if (me != nullptr) {
+			me->m_synchronize.lock();
+
+			if (is_new_data_required) {
+				me->m_synchronize.waitOnSignal(0);
+			}
+
+			out_data = me->m_sensor_data;
+			me->m_synchronize.unlock();
+			ret = 0;
+		}
+
+		return ret;
+	}
+
+
+protected:
+	virtual void _measure() = 0;
+
+	struct ltc2946_sensor_data		m_sensor_data;
+	SyncObj 			m_synchronize;
+};
+
+}; // namespace DriverFramework

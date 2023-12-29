@@ -57,7 +57,11 @@ struct ms5611_sensor_measurement {
 	int32_t pressure_mbar; // Temperature compensated pressure with 0.01 mbar resolution
 };
 
+#if defined(__DF_OCPOC)
+#define BARO_DEVICE_PATH "/dev/spidev1.1"
+#else
 #define BARO_DEVICE_PATH "/dev/i2c-1"
+#endif
 
 // update frequency is 50 Hz (44.4-51.3Hz ) at 8x oversampling
 #define MS5611_MEASURE_INTERVAL_US 20000 // microseconds
@@ -93,14 +97,14 @@ public:
 	virtual ~MS5611() = default;
 
 	// @return 0 on success, -errno on failure
-	int start();
+	virtual int start() override;
 
 	// @return 0 on success, -errno on failure
-	int stop();
+	virtual int stop() override;
 
 protected:
-	void _measure();
-	virtual int _publish(struct baro_sensor_data &data);
+	virtual void _measure() override;
+	virtual int _publish(struct baro_sensor_data &data) = 0;
 
 	// Returns pressure in Pa as unsigned 32 bit integer
 	// Output value of “24674867” represents

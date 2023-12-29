@@ -74,7 +74,7 @@ public:
 	void shutdown();
 	void enableStats(bool enable);
 
-	static void *process_trampoline(void *);
+	static void *process_trampoline(void * /*arg*/);
 
 private:
 	HRTWorkQueue() = default;
@@ -116,41 +116,29 @@ static SyncObj *g_framework;
 
 static uint64_t TsToAbstime(struct timespec *ts)
 {
-	uint64_t result;
-
-	result = (uint64_t)(ts->tv_sec) * 1000000;
+	uint64_t result = (uint64_t)(ts->tv_sec) * 1000000UL;
 	result += ts->tv_nsec / 1000;
 
 	return result;
 }
 
-static uint64_t getStartTime()
+static uint64_t starttime = 0;
+
+static void initStartTime()
 {
-	static SyncObj *lock = nullptr;
-	static uint64_t starttime = 0;
-
-	if (!lock) {
-		lock = new SyncObj;
-	}
-
 	struct timespec ts = {};
-
-	lock->lock();
-
 	int ret = absoluteTime(ts);
 
 	if (ret != 0) {
-		printf("ERROR: absoluteTime returned (%d)", ret);
-		lock->unlock();
-		return 0;
+		printf("ERROR: absoluteTime returned (%d)\n", ret);
+		return;
 	}
 
-	if (!starttime) {
-		starttime = TsToAbstime(&ts);
-	}
+	starttime = TsToAbstime(&ts);
+}
 
-	lock->unlock();
-
+static inline uint64_t getStartTime()
+{
 	return starttime;
 }
 
@@ -251,6 +239,8 @@ void Framework::shutdown()
 
 int Framework::initialize()
 {
+	initStartTime(); // must be initialized before any other timing methods are called
+
 	DF_LOG_DEBUG("Framework::initialize");
 
 	g_framework = new SyncObj;
@@ -498,10 +488,10 @@ void HRTWorkQueue::process()
 			m_reschedule.lock();
 			m_reschedule.waitOnSignal(wait_time_usec);
 			m_reschedule.unlock();
-			DF_LOG_DEBUG("Done wait");
+			DF_LOG_DEBUG("HRTWorkQueue::process done wait");
 		}
 
-		DF_LOG_DEBUG("not waiting for work (%" PRIi64 "usec)", wait_time_usec);
+		DF_LOG_DEBUG("HRTWorkQueue::process not waiting for work");
 	}
 };
 

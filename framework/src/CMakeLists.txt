@@ -41,7 +41,7 @@ if("${DF_TARGET}" STREQUAL "nuttx")
 		SyncObj.cpp
 		Time.cpp
 		)
-	add_dependencies(df_driver_framework platforms__nuttx)
+	add_dependencies(df_driver_framework prebuild_targets)
 else()
 	df_add_library(df_driver_framework
 		DriverFramework.cpp
@@ -55,6 +55,9 @@ else()
 		DFDiag.cpp
 		I2CDevObj.cpp
 		SPIDevObj.cpp
+		ImuSensor.cpp
+		BaroSensor.cpp
+		MagSensor.cpp
 		)
 endif()
 

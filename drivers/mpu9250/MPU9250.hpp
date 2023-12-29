@@ -152,6 +152,7 @@ namespace DriverFramework
 
 // This is ACCEL_FCHOICE_B which is the inverse of ACCEL_FCHOICE
 #define BITS_ACCEL_CONFIG2_BW_1130HZ	0x08
+#define BITS_ACCEL_CONFIG2_BW_41HZ		0x03
 
 #define BITS_I2C_SLV0_EN    0x80
 #define BITS_I2C_SLV0_READ_8BYTES 0x08
@@ -270,14 +271,14 @@ public:
 	}
 
 	// @return 0 on success, -errno on failure
-	virtual int start();
+	virtual int start() override;
 
 	// @return 0 on success, -errno on failure
-	virtual int stop();
+	virtual int stop() override;
 
 protected:
-	virtual void _measure();
-	virtual int _publish(struct imu_sensor_data &data);
+	virtual void _measure() override;
+	virtual int _publish(struct imu_sensor_data &data) = 0;
 
 private:
 	// @returns 0 on success, -errno on failure
