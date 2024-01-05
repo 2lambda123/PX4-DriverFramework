@@ -2,7 +2,7 @@ repo_name: 2lambda123/PX4-DriverFramework
 report_id: 15b31869b14814e85cd8495e828ec2f7
 version: 0.1
 repo_type: Public
-timestamp: '2023-12-29T20:31:53+00:00'
+timestamp: '2024-01-05T08:14:12+00:00'
 requested_by: 2lambda123
 provider: github
 branch: Use_ATLFlight_dspal
@@ -16,6 +16,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Languages
   image_url: https://img.stackshare.io/no-img-open-source.png
+  detection_source_url: https://github.com/2lambda123/PX4-DriverFramework
   detection_source: Repo Metadata
 - name: C++
   description: Has imperative, object-oriented and generic programming features, while
@@ -26,6 +27,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Languages
   image_url: https://img.stackshare.io/service/1049/cplusplus.png
+  detection_source_url: https://github.com/2lambda123/PX4-DriverFramework
   detection_source: Repo Metadata
 - name: CMake
   description: 'An open-source system that manages the build process '
@@ -35,6 +37,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Java Build Tools
   image_url: https://img.stackshare.io/service/2424/0UlUI_y1_400x400.jpg
+  detection_source_url: https://github.com/2lambda123/PX4-DriverFramework
   detection_source: Repo Metadata
 - name: Git
   description: Fast, scalable, distributed revision control system
@@ -44,6 +47,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Version Control System
   image_url: https://img.stackshare.io/service/1046/git.png
+  detection_source_url: https://github.com/2lambda123/PX4-DriverFramework
   detection_source: Repo Metadata
 - name: Travis CI
   description: A hosted continuous integration service for open source and private
@@ -54,6 +58,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Continuous Integration
   image_url: https://img.stackshare.io/service/460/Lu6cGu0z_400x400.png
+  detection_source_url: https://github.com/2lambda123/PX4-DriverFramework/blob/Use_ATLFlight_dspal/.travis.yml
   detection_source: ".travis.yml"
   last_updated_by: Lorenz Meier
   last_updated_on: 2015-11-03 12:05:11.000000000 Z
